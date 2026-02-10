@@ -17,6 +17,7 @@ const App = () => {
       <header className="main-heading">
         INTERACTIVE QUESTION MANAGEMENT
       </header>
+
       <section className="main-section" style={{ flexDirection: 'column', alignItems: 'flex-start', padding: '2rem' }}>
         <ul style={{ width: '100%', padding: 0, margin: 0 }}>
         {topics.map((topic, tIdx) => (
@@ -42,7 +43,19 @@ const App = () => {
                 </>
               ) : (
                 <>
-                  <span style={{ flex: 1 }}>{topic.name}</span>
+                  <span style={{ flex: 1 }}>
+                    {topic.name}
+                    {(() => {
+                      const subtopics = topic.subtopics || [];
+                      let total = 0, visited = 0;
+                      subtopics.forEach(sub => {
+                        const questions = sub.questions || [];
+                        total += questions.length;
+                        visited += questions.filter(q => q.visited).length;
+                      });
+                      return total > 0 ? ` (${visited}/${total})` : '';
+                    })()}
+                  </span>
                   
                   <button style={{ marginLeft: '0.5rem' }} onClick={e => { e.stopPropagation(); setEditTopicIdx(tIdx); setEditTopicValue(topic.name); }}>Edit</button>
                 </>
@@ -74,7 +87,6 @@ const App = () => {
                       ) : (
                         <>
                           <span style={{ flex: 1 }}>{sub.name}</span>
-                          
                           <button style={{ marginLeft: '0.5rem' }} onClick={e => { e.stopPropagation(); setEditSubIdx({ t: tIdx, s: sIdx }); setEditSubValue(sub.name); }}>Edit</button>
                         </>
                       )}
