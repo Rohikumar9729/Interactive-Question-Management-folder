@@ -1,7 +1,5 @@
-
 import { create } from 'zustand';
-
-// Sample data structure
+const LOCAL_STORAGE_KEY = 'iqm_topics';
 const sampleTopics = [
   {
     name: 'Array',
@@ -104,17 +102,21 @@ export const useStore = create((set) => ({
   topics: [],
 
   // Topic CRUD
-  addTopic: (name) => set((state) => ({
-    topics: [...state.topics, { name, subtopics: [] }]
-  })),
+  addTopic: (name) => set((state) => {
+    const topics = [...state.topics, { name, subtopics: [] }];
+    saveTopics(topics);
+    return { topics };
+  }),
   updateTopic: (index, newName) => set((state) => {
     const topics = [...state.topics];
     topics[index].name = newName;
+    saveTopics(topics);
     return { topics };
   }),
   deleteTopic: (index) => set((state) => {
     const topics = [...state.topics];
     topics.splice(index, 1);
+    saveTopics(topics);
     return { topics };
   }),
 
@@ -125,37 +127,53 @@ export const useStore = create((set) => ({
       ...(topics[topicIndex].subtopics || []),
       { name, questions: [] }
     ];
+    saveTopics(topics);
     return { topics };
   }),
   updateSubtopic: (topicIndex, subtopicIndex, newName) => set((state) => {
     const topics = [...state.topics];
     topics[topicIndex].subtopics[subtopicIndex].name = newName;
+    saveTopics(topics);
     return { topics };
   }),
   deleteSubtopic: (topicIndex, subtopicIndex) => set((state) => {
     const topics = [...state.topics];
     topics[topicIndex].subtopics.splice(subtopicIndex, 1);
+    saveTopics(topics);
     return { topics };
   }),
 
   // Question CRUD
   addQuestion: (topicIndex, subtopicIndex, question) => set((state) => {
     const topics = [...state.topics];
+    const qObj = typeof question === 'string' ? { text: question, link: '', visited: false } : { ...question, visited: question.visited || false };
     topics[topicIndex].subtopics[subtopicIndex].questions = [
       ...(topics[topicIndex].subtopics[subtopicIndex].questions || []),
-      typeof question === 'string' ? { text: question, link: '' } : question
+      qObj
     ];
+    saveTopics(topics);
     return { topics };
   }),
   updateQuestion: (topicIndex, subtopicIndex, questionIndex, newQuestion) => set((state) => {
     const topics = [...state.topics];
+    const prev = topics[topicIndex].subtopics[subtopicIndex].questions[questionIndex];
     topics[topicIndex].subtopics[subtopicIndex].questions[questionIndex] =
-      typeof newQuestion === 'string' ? { text: newQuestion, link: '' } : newQuestion;
+      typeof newQuestion === 'string' ? { text: newQuestion, link: '', visited: prev && prev.visited } : { ...newQuestion, visited: (newQuestion.visited !== undefined ? newQuestion.visited : (prev && prev.visited)) };
+    saveTopics(topics);
+    return { topics };
+  }),
+
+  toggleVisitedQuestion: (topicIndex, subtopicIndex, questionIndex) => set((state) => {
+    const topics = [...state.topics];
+    const q = topics[topicIndex].subtopics[subtopicIndex].questions[questionIndex];
+    if (q) q.visited = !q.visited;
+    saveTopics(topics);
     return { topics };
   }),
   deleteQuestion: (topicIndex, subtopicIndex, questionIndex) => set((state) => {
     const topics = [...state.topics];
     topics[topicIndex].subtopics[subtopicIndex].questions.splice(questionIndex, 1);
+    saveTopics(topics);
     return { topics };
   }),
 
@@ -163,8 +181,28 @@ export const useStore = create((set) => ({
   loadInitialData: (data) => set({ topics: data }),
 }));
 
-// Load sample data on first import
-useStore.getState().loadInitialData(sampleTopics);
+// LocalStorage helpers
+function saveTopics(topics) {
+  try {
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(topics));
+  } catch (e) {
+    // ignore
+  }
+}
+
+function loadTopics() {
+  try {
+    const data = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (data) return JSON.parse(data);
+  } catch (e) {
+    // ignore
+  }
+  return null;
+}
+
+// Load from localStorage or fallback to sample data
+const storedTopics = loadTopics();
+useStore.getState().loadInitialData(storedTopics || sampleTopics);
 
 // Export all operations for external use
 export const addTopic = useStore.getState().addTopic;

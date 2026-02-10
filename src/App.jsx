@@ -1,6 +1,3 @@
-
-
-
 import React, { useState } from "react";
 import { useStore } from "./assets/store";
 import '../src/App.css';
@@ -46,7 +43,7 @@ const App = () => {
               ) : (
                 <>
                   <span style={{ flex: 1 }}>{topic.name}</span>
-                  {/* Toggle button removed */}
+                  
                   <button style={{ marginLeft: '0.5rem' }} onClick={e => { e.stopPropagation(); setEditTopicIdx(tIdx); setEditTopicValue(topic.name); }}>Edit</button>
                 </>
               )}
@@ -77,7 +74,7 @@ const App = () => {
                       ) : (
                         <>
                           <span style={{ flex: 1 }}>{sub.name}</span>
-                          {/* Toggle button removed */}
+                          
                           <button style={{ marginLeft: '0.5rem' }} onClick={e => { e.stopPropagation(); setEditSubIdx({ t: tIdx, s: sIdx }); setEditSubValue(sub.name); }}>Edit</button>
                         </>
                       )}

@@ -1,8 +1,6 @@
 import React from 'react';
 import { useStore } from '../assets/store';
 import '../App.css';
-
-
 function Topic({ onSelect }) {
   const { topics, addTopic, updateTopic, deleteTopic } = useStore();
   const [newTopic, setNewTopic] = React.useState('');
