@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useStore } from "./assets/store";
+import { useStore, moveTopic, moveSubtopic } from "./assets/store";
 import '../src/App.css';
 import Questions from "./Components/Questions";
 
@@ -24,6 +24,18 @@ const App = () => {
           <React.Fragment key={tIdx}>
             <li
               className="topic-item"
+              draggable
+              onDragStart={(e) => { e.dataTransfer.setData('text/plain', JSON.stringify({ type: 'topic', from: tIdx })); }}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => {
+                e.stopPropagation();
+                try {
+                  const data = JSON.parse(e.dataTransfer.getData('text/plain'));
+                  if (data && data.type === 'topic') {
+                    moveTopic(data.from, tIdx);
+                  }
+                } catch (err) { void err; }
+              }}
               style={{ cursor: 'pointer', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', width: '100%' }}
               onClick={() => {
                 setOpenTopic(openTopic === tIdx ? null : tIdx);
@@ -67,6 +79,18 @@ const App = () => {
                   <React.Fragment key={sIdx}>
                     <li
                       className="subtopic-item"
+                      draggable
+                      onDragStart={(e) => { e.dataTransfer.setData('text/plain', JSON.stringify({ type: 'subtopic', fromTopic: tIdx, fromIndex: sIdx })); }}
+                      onDragOver={(e) => e.preventDefault()}
+                      onDrop={(e) => {
+                        e.stopPropagation();
+                        try {
+                          const data = JSON.parse(e.dataTransfer.getData('text/plain'));
+                          if (data && data.type === 'subtopic') {
+                            moveSubtopic(data.fromTopic, data.fromIndex, sIdx, tIdx);
+                          }
+                        } catch (err) { void err; }
+                      }}
                       style={{ cursor: 'pointer', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', width: '100%' }}
                       onClick={e => {
                         e.stopPropagation();

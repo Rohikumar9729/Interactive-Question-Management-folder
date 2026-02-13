@@ -177,6 +177,59 @@ export const useStore = create((set) => ({
     return { topics };
   }),
 
+  
+  moveTopic: (fromIndex, toIndex) => set((state) => {
+    const topics = [...state.topics];
+    if (fromIndex < 0 || fromIndex >= topics.length || toIndex < 0 || toIndex >= topics.length) return { topics };
+    const [item] = topics.splice(fromIndex, 1);
+    topics.splice(toIndex, 0, item);
+    saveTopics(topics);
+    return { topics };
+  }),
+
+  moveSubtopic: (topicIndex, fromIndex, toIndex, targetTopicIndex) => set((state) => {
+    const topics = [...state.topics];
+    const srcTopic = topics[topicIndex];
+    const dstTopic = typeof targetTopicIndex === 'number' ? topics[targetTopicIndex] : srcTopic;
+    if (!srcTopic || !dstTopic) return { topics };
+    const fromList = srcTopic.subtopics || [];
+    const toList = dstTopic.subtopics || [];
+    if (fromIndex < 0 || fromIndex >= fromList.length) return { topics };
+    const [item] = fromList.splice(fromIndex, 1);
+    if (dstTopic === srcTopic) {
+      // reorder within same topic
+      toList.splice(toIndex, 0, item);
+      topics[topicIndex].subtopics = toList;
+    } else {
+      // move between topics
+      toList.splice(toIndex, 0, item);
+      topics[topicIndex].subtopics = fromList;
+      topics[targetTopicIndex].subtopics = toList;
+    }
+    saveTopics(topics);
+    return { topics };
+  }),
+
+  moveQuestion: (topicIndex, subtopicIndex, fromIndex, toIndex, targetTopicIndex, targetSubtopicIndex) => set((state) => {
+    const topics = [...state.topics];
+    const srcTopic = topics[topicIndex];
+    const dstTopic = typeof targetTopicIndex === 'number' ? topics[targetTopicIndex] : srcTopic;
+    if (!srcTopic || !dstTopic) return { topics };
+    const srcSub = srcTopic.subtopics[subtopicIndex];
+    const dstSub = (typeof targetSubtopicIndex === 'number') ? dstTopic.subtopics[targetSubtopicIndex] : srcSub;
+    if (!srcSub || !dstSub) return { topics };
+    const fromList = srcSub.questions || [];
+    const toList = dstSub.questions || [];
+    if (fromIndex < 0 || fromIndex >= fromList.length) return { topics };
+    const [item] = fromList.splice(fromIndex, 1);
+    toList.splice(toIndex, 0, item);
+    // assign back
+    topics[topicIndex].subtopics[subtopicIndex].questions = fromList;
+    topics[(typeof targetTopicIndex === 'number' ? targetTopicIndex : topicIndex)].subtopics[(typeof targetSubtopicIndex === 'number' ? targetSubtopicIndex : subtopicIndex)].questions = toList;
+    saveTopics(topics);
+    return { topics };
+  }),
+
   // Utility
   loadInitialData: (data) => set({ topics: data }),
 }));
@@ -186,7 +239,7 @@ function saveTopics(topics) {
   try {
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(topics));
   } catch (e) {
-    // ignore
+    void e;
   }
 }
 
@@ -195,7 +248,7 @@ function loadTopics() {
     const data = localStorage.getItem(LOCAL_STORAGE_KEY);
     if (data) return JSON.parse(data);
   } catch (e) {
-    // ignore
+    void e;
   }
   return null;
 }
@@ -214,3 +267,6 @@ export const deleteSubtopic = useStore.getState().deleteSubtopic;
 export const addQuestion = useStore.getState().addQuestion;
 export const updateQuestion = useStore.getState().updateQuestion;
 export const deleteQuestion = useStore.getState().deleteQuestion;
+export const moveTopic = useStore.getState().moveTopic;
+export const moveSubtopic = useStore.getState().moveSubtopic;
+export const moveQuestion = useStore.getState().moveQuestion;

@@ -1,5 +1,5 @@
 import React from 'react';
-import { useStore } from '../assets/store';
+import { useStore, moveQuestion } from '../assets/store';
 import '../App.css';
 
 function Questions({ topicIndex, subtopicIndex }) {
@@ -29,9 +29,37 @@ function Questions({ topicIndex, subtopicIndex }) {
   return (
     <div className="question-container">
       <h4>Questions</h4>
-      <ul style={{ padding: 0, margin: 0 }}>
+      <ul style={{ padding: 0, margin: 0 }}
+        onDragOver={(e) => e.preventDefault()}
+        onDrop={(e) => {
+          e.stopPropagation();
+          try {
+            const data = JSON.parse(e.dataTransfer.getData('text/plain'));
+            if (data && data.type === 'question') {
+              // drop to end
+              moveQuestion(data.fromTopic, data.fromSubtopic, data.fromIndex, questions.length, topicIndex, subtopicIndex);
+            }
+          } catch (err) { void err; }
+        }}
+      >
         {questions.map((q, idx) => (
-          <li key={idx} className="question-item" style={{ display: 'flex', alignItems: 'center' }}>
+          <li
+            key={idx}
+            className="question-item"
+            draggable
+            onDragStart={(e) => { e.dataTransfer.setData('text/plain', JSON.stringify({ type: 'question', fromTopic: topicIndex, fromSubtopic: subtopicIndex, fromIndex: idx })); }}
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={(e) => {
+              e.stopPropagation();
+              try {
+                const data = JSON.parse(e.dataTransfer.getData('text/plain'));
+                if (data && data.type === 'question') {
+                  moveQuestion(data.fromTopic, data.fromSubtopic, data.fromIndex, idx, topicIndex, subtopicIndex);
+                }
+              } catch (err) { void err; }
+            }}
+            style={{ display: 'flex', alignItems: 'center' }}
+          >
             <input
               type="checkbox"
               checked={!!q.visited}
